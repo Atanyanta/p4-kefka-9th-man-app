@@ -221,6 +221,22 @@ function set(id, val) {
     document.querySelectorAll(`[data-id="${id}"]`).forEach(btn => {
         btn.classList.toggle('selected', btn.dataset.val === val);
     });
+
+    const mirror = {
+        c2_type:  { otherId: 'c4_type',  opposite: { water: 'fire', fire: 'water' } },
+        c4_type:  { otherId: 'c2_type',  opposite: { water: 'fire', fire: 'water' } },
+        c2_timer: { otherId: 'c4_timer', opposite: { long: 'short', short: 'long' } },
+        c4_timer: { otherId: 'c2_timer', opposite: { long: 'short', short: 'long' } },
+    };
+    if (mirror[id]) {
+        const { otherId, opposite } = mirror[id];
+        const otherVal = opposite[val];
+        state[otherId] = otherVal;
+        document.querySelectorAll(`[data-id="${otherId}"]`).forEach(btn => {
+            btn.classList.toggle('selected', btn.dataset.val === otherVal);
+        });
+    }
+
     render();
 }
 
