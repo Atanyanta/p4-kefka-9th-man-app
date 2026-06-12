@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raid Callout Tool</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: #12121e;
+            color: #dde;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            padding: 20px;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #c8b87f;
+            font-size: 1.3em;
+            margin-bottom: 18px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .reset-btn {
+            display: block;
+            margin: 0 auto 24px;
+            background: #1e1e2e;
+            color: #888;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 8px 32px;
+            cursor: pointer;
+            font-size: 0.88em;
+            transition: background 0.15s, color 0.15s;
+        }
+        .reset-btn:hover { background: #2a2a3e; color: #bbb; }
+
+        .section-title {
+            color: #c8b87f;
+            font-size: 0.72em;
+            font-weight: bold;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #1e1e30;
+        }
+
+        .cards-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+
+        .cast-card {
+            background: #191926;
+            border: 1px solid #26263a;
+            border-radius: 8px;
+            padding: 11px 13px;
+            min-width: 148px;
+        }
+        .cast-card.ignored { opacity: 0.3; }
+
+        .cast-label {
+            font-size: 0.78em;
+            color: #8899aa;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .btn-pair { display: flex; gap: 6px; }
+
+        .group-row { margin-bottom: 7px; }
+        .group-row:last-child { margin-bottom: 0; }
+        .group-sublabel {
+            font-size: 0.68em;
+            color: #445566;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 9px 0;
+            border: 2px solid transparent;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.82em;
+            font-weight: bold;
+            transition: all 0.12s;
+        }
+
+        .btn-real { background: #1c3326; color: #4d9a6e; border-color: #1c3326; }
+        .btn-real:hover { background: #22402e; }
+        .btn-real.selected { background: #1a6b3a; border-color: #2daa58; color: #7dffaa; }
+
+        .btn-fake { background: #331c1c; color: #bb5555; border-color: #331c1c; }
+        .btn-fake:hover { background: #401c1c; }
+        .btn-fake.selected { background: #7a1a1a; border-color: #cc3333; color: #ff8888; }
+
+        .btn-water { background: #1a2640; color: #5580bb; border-color: #1a2640; }
+        .btn-water:hover { background: #1e2e4a; }
+        .btn-water.selected { background: #1a4a90; border-color: #4488dd; color: #88bbff; }
+
+        .btn-fire { background: #301a0a; color: #bb6622; border-color: #301a0a; }
+        .btn-fire:hover { background: #3a2010; }
+        .btn-fire.selected { background: #8a3010; border-color: #dd6622; color: #ffaa55; }
+
+        .btn-toggle { background: #1e1e2e; color: #5a6070; border-color: #1e1e2e; }
+        .btn-toggle:hover { background: #252535; }
+        .btn-toggle.selected { background: #2a3050; border-color: #5577aa; color: #aabbcc; }
+
+        /* Readout */
+        .readout {
+            background: #0d0d1a;
+            border: 1px solid #222238;
+            border-radius: 10px;
+            padding: 18px 20px;
+        }
+
+        .readout-title {
+            color: #c8b87f;
+            font-size: 0.72em;
+            font-weight: bold;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #1e1e30;
+        }
+
+        .step {
+            display: grid;
+            grid-template-columns: 22px 170px 1fr;
+            gap: 12px;
+            padding: 9px 2px;
+            border-bottom: 1px solid #181828;
+            align-items: center;
+        }
+        .step:last-child { border-bottom: none; }
+
+        .step-num { color: #334; font-size: 0.72em; text-align: right; }
+        .step-phase { color: #55607a; font-size: 0.75em; }
+        .step-callout { font-size: 0.92em; line-height: 1.5; }
+
+        .c-neutral { color: #90aace; }
+        .c-real  { color: #52e88a; font-weight: bold; }
+        .c-fake  { color: #ff6060; font-weight: bold; }
+        .c-dim   { color: #3a3a5a; font-style: italic; }
+
+        .pill {
+            display: inline-block;
+            padding: 1px 9px;
+            border-radius: 3px;
+            font-size: 0.82em;
+            font-weight: bold;
+            vertical-align: middle;
+        }
+        .pill-real    { background: #1a4030; color: #52e88a; }
+        .pill-fake    { background: #401a1a; color: #ff6060; }
+        .pill-pending { background: #18182a; color: #3a3a5a; }
+
+        .sep { color: #2a2a44; margin: 0 8px; }
+    </style>
+</head>
+<body>
+
+<h1>Raid Callout Tool</h1>
+<button class="reset-btn" onclick="resetAll()">Reset — New Pull</button>
+
+<div class="section-title">Application Phase</div>
+<div class="cards-row" id="app-cards"></div>
+
+<div class="section-title">Resolution Inputs</div>
+<div class="cards-row" id="res-cards"></div>
+
+<div class="readout">
+    <div class="readout-title">Callout Sequence</div>
+    <div id="readout"></div>
+</div>
+
+<script>
+const state = {};
+
+const APP_CASTS = [
+    { id: 'gaze1',   label: '① Gaze 1', sublabel: 'Cast' },
+    {
+        label: '② Dynamo / Twister',
+        groups: [
+            { id: 'c2_real',  sublabel: 'Cast',  opts: [{ val: 'real',  text: 'Real',  cls: 'btn-real' },  { val: 'fake',  text: 'Fake',  cls: 'btn-fake' }] },
+            { id: 'c2_type',  sublabel: 'Type',  opts: [{ val: 'water', text: 'Water', cls: 'btn-water' }, { val: 'fire', text: 'Fire', cls: 'btn-fire' }] },
+            { id: 'c2_timer', sublabel: 'Timer', opts: [{ val: 'long',  text: 'Long',  cls: 'btn-toggle' }, { val: 'short', text: 'Short', cls: 'btn-toggle' }] },
+        ]
+    },
+    { id: 'gaze2',   label: '③ Gaze 2', sublabel: 'Cast' },
+    {
+        label: '④ Dynamo / Twister',
+        groups: [
+            { id: 'c4_real',  sublabel: 'Cast',  opts: [{ val: 'real',  text: 'Real',  cls: 'btn-real' },  { val: 'fake',  text: 'Fake',  cls: 'btn-fake' }] },
+            { id: 'c4_type',  sublabel: 'Type',  opts: [{ val: 'water', text: 'Water', cls: 'btn-water' }, { val: 'fire', text: 'Fire', cls: 'btn-fire' }] },
+            { id: 'c4_timer', sublabel: 'Timer', opts: [{ val: 'long',  text: 'Long',  cls: 'btn-toggle' }, { val: 'short', text: 'Short', cls: 'btn-toggle' }] },
+        ]
+    },
+];
+
+const RES_INPUTS = [
+    { id: 'thunder',     label: 'Thunder' },
+    { id: 'blizzard',   label: 'Blizzard' },
+    { id: 'combo_light', label: 'Combo Lightning' },
+    { id: 'combo_bliz',  label: 'Combo Blizzard' },
+];
+
+function set(id, val) {
+    state[id] = val;
+    document.querySelectorAll(`[data-id="${id}"]`).forEach(btn => {
+        btn.classList.toggle('selected', btn.dataset.val === val);
+    });
+    render();
+}
+
+function resetAll() {
+    for (const k in state) delete state[k];
+    document.querySelectorAll('.btn').forEach(b => b.classList.remove('selected'));
+    render();
+}
+
+function makeCard(cast, container) {
+    const card = document.createElement('div');
+    card.className = 'cast-card' + (cast.ignored ? ' ignored' : '');
+    if (cast.ignored) {
+        card.innerHTML = `<div class="cast-label">${cast.label}</div><div style="color:#2a2a40;font-size:0.75em">ignored</div>`;
+    } else if (cast.groups) {
+        const groupsHtml = cast.groups.map(g => `
+            <div class="group-row">
+                <div class="group-sublabel">${g.sublabel}</div>
+                <div class="btn-pair">
+                    ${g.opts.map(o => `<button class="btn ${o.cls}" data-id="${g.id}" data-val="${o.val}" onclick="set('${g.id}','${o.val}')">${o.text}</button>`).join('')}
+                </div>
+            </div>`).join('');
+        card.innerHTML = `<div class="cast-label">${cast.label}</div>${groupsHtml}`;
+    } else {
+        const sublabelHtml = cast.sublabel ? `<div class="group-sublabel">${cast.sublabel}</div>` : '';
+        card.innerHTML = `
+            <div class="cast-label">${cast.label}</div>
+            ${sublabelHtml}
+            <div class="btn-pair">
+                <button class="btn btn-real" data-id="${cast.id}" data-val="real" onclick="set('${cast.id}','real')">Real</button>
+                <button class="btn btn-fake" data-id="${cast.id}" data-val="fake" onclick="set('${cast.id}','fake')">Fake</button>
+            </div>`;
+    }
+    container.appendChild(card);
+}
+
+function pill(val) {
+    if (!val) return `<span class="pill pill-pending">?</span>`;
+    return val === 'real'
+        ? `<span class="pill pill-real">REAL</span>`
+        : `<span class="pill pill-fake">FAKE</span>`;
+}
+
+// Two fakes cancel out: same signal × 2 = real, differing signals = fake
+function combine(a, b) {
+    if (!a || !b) return null;
+    return a === b ? 'real' : 'fake';
+}
+
+function gazeCallout(id) {
+    const v = state[id];
+    if (!v) return `<span class="c-dim">waiting for cast…</span>`;
+    return v === 'real'
+        ? `<span class="c-real">Look AWAY from gazes</span>`
+        : `<span class="c-fake">Look AT gazes</span>`;
+}
+
+function render() {
+    const finalLight = combine(state.thunder,  state.combo_light);
+    const finalBliz  = combine(state.blizzard, state.combo_bliz);
+
+    function castReminder(realId, castNum) {
+        const v = state[realId];
+        if (!v) return `<span class="c-dim">waiting for ${castNum} cast…</span>`;
+        const mark  = v === 'real' ? `<span class="c-real">Lightning</span>`  : `<span class="c-fake">Water</span>`;
+        const bombs = v === 'real' ? `<span class="c-real">Stillness</span>` : `<span class="c-fake">Motion</span>`;
+        return `${pill(v)}<span class="sep">|</span>Mark: ${mark}<span class="sep">|</span>Bombs: ${bombs}`;
+    }
+
+    function getMechCallout(type, real) {
+        if (!type || !real) return `<span class="c-dim">waiting…</span>`;
+        const leave = (type === 'fire' && real === 'real') || (type === 'water' && real === 'fake');
+        return leave
+            ? `<span class="c-neutral">Stack center →</span> <span class="c-fake">leave</span>`
+            : `<span class="c-neutral">Stack center →</span> <span class="c-real">stay</span>`;
+    }
+
+    const shortCast = state.c2_timer === 'short' ? { type: state.c2_type, real: state.c2_real }
+                    : state.c4_timer === 'short' ? { type: state.c4_type, real: state.c4_real }
+                    : null;
+    const longCast  = state.c2_timer === 'long'  ? { type: state.c2_type, real: state.c2_real }
+                    : state.c4_timer === 'long'  ? { type: state.c4_type, real: state.c4_real }
+                    : null;
+
+    const step4Callout = shortCast ? getMechCallout(shortCast.type, shortCast.real) : `<span class="c-dim">waiting for short-timer cast…</span>`;
+    const step7Callout = longCast  ? getMechCallout(longCast.type,  longCast.real)  : `<span class="c-dim">waiting for long-timer cast…</span>`;
+
+    const steps = [
+        ['1st Cast',           castReminder('gaze1', '1st')],
+        ['2nd Cast',           castReminder('gaze2', '2nd')],
+        ['Shapes',             `<span class="c-neutral">Resolve shapes</span>`],
+        ['Spreads/Enums 1',    `<span class="c-neutral">First spreads and stacks — handle motion/stillness</span>`],
+        ['Gazes 1 + Thunder',  `${gazeCallout('gaze1')}<span class="sep">|</span>Thunder: ${pill(state.thunder)}`],
+        ['Short timer',        step4Callout],
+        ['Spreads/Enums 2',    `<span class="c-neutral">Second spreads and stacks — handle motion/stillness</span><span class="sep">|</span>Blizzard: ${pill(state.blizzard)}`],
+        ['Gazes 2',            gazeCallout('gaze2')],
+        ['Long timer + Combo',  `${step7Callout}<span class="sep">|</span>Lightning: ${pill(finalLight)}<span class="sep">|</span>Blizzard: ${pill(finalBliz)}`],
+    ];
+
+    document.getElementById('readout').innerHTML = steps.map(([phase, callout], i) => `
+        <div class="step">
+            <div class="step-num">${i + 1}</div>
+            <div class="step-phase">${phase}</div>
+            <div class="step-callout">${callout}</div>
+        </div>
+    `).join('');
+}
+
+APP_CASTS.forEach(c => makeCard(c, document.getElementById('app-cards')));
+RES_INPUTS.forEach(c => makeCard(c, document.getElementById('res-cards')));
+render();
+</script>
+</body>
+</html>
